@@ -47,6 +47,7 @@ import { ConnectedApps } from './pages/home/ConnectedApps';
 import { ConfirmDisableSmartWallet } from './pages/home/Delegations/ConfirmDisableSmartWallet';
 import { Delegations } from './pages/home/Delegations/Delegations';
 import { RevokeDelegationPage } from './pages/home/Delegations/RevokeDelegationPage';
+import { EarnPage, EarnSettingsAction } from './pages/home/Earn/Earn';
 import { NftDetailsRoute } from './pages/home/NFTs/NFTDetails';
 import { TokenDetails } from './pages/home/TokenDetails/TokenDetails';
 import { ChooseHW } from './pages/hw/chooseHW';
@@ -998,6 +999,22 @@ const ROUTE_DATA = [
         background="surfaceSecondary"
       >
         <Buy />
+      </AnimatedRoute>
+    ),
+  },
+  {
+    path: ROUTES.EARN,
+    element: (
+      <AnimatedRoute
+        direction="upRight"
+        navbar
+        navbarIcon="ex"
+        title={i18n.t('earn.title')}
+        protectedRoute
+        background="surfaceSecondary"
+        rightNavbarComponent={<EarnSettingsAction />}
+      >
+        <EarnPage />
       </AnimatedRoute>
     ),
   },

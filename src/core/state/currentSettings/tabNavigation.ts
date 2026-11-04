@@ -17,10 +17,14 @@ export const useTabNavigation = createBaseStore<TabNavigationState>(
   }),
   createExtensionStoreOptions({
     storageKey: 'tabNavigation',
-    version: 1,
+    version: 2,
     migrate(persistedState, version) {
       if (version === 0) {
         return {}; // Use defaults, points was replaced with rewards
+      }
+      // An early Earn build had an Earn tab. Earn is a page now.
+      if ((persistedState as { selectedTab?: string }).selectedTab === 'earn') {
+        return {};
       }
       return persistedState as TabNavigationState;
     },

@@ -27,10 +27,24 @@ if (process.env.ANALYZE_BUNDLE === 'true') {
   );
 }
 
+// Earn demo: the Base RPC set in EARN_BASE_RPC_URL must pass the extension
+// CSP. Add its origin only when the variable holds an https URL.
+const earnRpcOrigin = (() => {
+  try {
+    const url = new URL((process.env.EARN_BASE_RPC_URL || '').trim());
+    return url.protocol === 'https:' ? url.origin : null;
+  } catch (e) {
+    return null;
+  }
+})();
+const connectSources = earnRpcOrigin
+  ? [...allowList.urls, earnRpcOrigin]
+  : allowList.urls;
+
 const manifestOverride = manifest;
 manifestOverride.content_security_policy.extension_pages = `${
   manifestOverride.content_security_policy.extension_pages
-} ${allowList.urls.join(' ')};`;
+} ${connectSources.join(' ')};`;
 
 module.exports = {
   devtool: 'cheap-module-eval-source-map',

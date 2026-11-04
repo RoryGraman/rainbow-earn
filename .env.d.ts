@@ -27,6 +27,8 @@ declare global {
       RUDDERSTACK_WRITE_KEY: string;
       SENTRY_DSN: string;
       SECURE_WALLET_HASH_KEY: string;
+      // Earn demo: an https Base RPC that needs no Rainbow key
+      EARN_BASE_RPC_URL?: string;
       // Development
       IS_DEV: 'true' | 'false';
       IS_TESTING: 'true' | 'false';

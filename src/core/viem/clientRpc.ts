@@ -1,5 +1,6 @@
 import { Chain } from 'viem';
 
+import { earnRpcOverride } from '~/core/earn/rpc';
 import { useConnectedToHardhatStore } from '~/core/state';
 
 import { proxyRpcEndpoint } from '../providers/proxy';
@@ -19,6 +20,9 @@ const getOriginalRpcEndpoint = (chain: Chain) => {
 };
 
 export const handleRpcUrl = (chain: Chain) => {
+  // Earn demo build: Base can use an endpoint that needs no Rainbow key.
+  const earnRpc = earnRpcOverride(chain.id, process.env.EARN_BASE_RPC_URL);
+  if (earnRpc) return earnRpc;
   if (
     (IS_TESTING &&
       ((chain.id === ChainId.mainnet &&

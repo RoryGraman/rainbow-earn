@@ -14,6 +14,8 @@ import { truncateAddress } from '~/core/utils/address';
 import { POPUP_URL, goToNewTab } from '~/core/utils/tabs';
 import { Box, ButtonSymbol, Inline, Stack, Text } from '~/design-system';
 import { triggerAlert } from '~/design-system/components/Alert/Alert';
+import { ButtonWrapper } from '~/design-system/components/Button/ButtonWrapper';
+import { widthStyles } from '~/design-system/components/ButtonSymbol/ButtonSymbol.css';
 import { SymbolProps } from '~/design-system/components/Symbol/Symbol';
 import { BoxStyles, TextStyles } from '~/design-system/styles/core.css';
 
@@ -32,6 +34,8 @@ import { useScroll } from '../../hooks/useScroll';
 import { useWallets } from '../../hooks/useWallets';
 import { ROUTES } from '../../urls';
 import { tabIndexes } from '../../utils/tabIndexes';
+
+import { EarnSymbol } from './Earn/EarnSymbol';
 
 export const Header = React.memo(function Header() {
   const { scrollYProgress: progress } = useScroll({
@@ -267,15 +271,28 @@ function ActionButtonsSection() {
             tooltipHint={shortcuts.home.BUY.display}
             tooltipText={i18n.t('tooltip.buy_crypto')}
           />
+
+          <ActionButton
+            icon={<EarnSymbol size={16} />}
+            testId="header-link-earn"
+            text={i18n.t('wallet_header.earn')}
+            tabIndex={tabIndexes.WALLET_HEADER_EARN_BUTTON}
+            onClick={() =>
+              isWatchingWallet ? alertWatchingWallet() : navigate(ROUTES.EARN)
+            }
+            tooltipText={i18n.t('tooltip.earn')}
+          />
         </Inline>
       )}
     </Box>
   );
 }
 
+// `icon` draws a custom glyph in place of an SF Symbol, on the same button.
 function ActionButton({
   cursor = 'default',
   symbol,
+  icon,
   text,
   onClick,
   testId,
@@ -284,14 +301,16 @@ function ActionButton({
   tooltipText,
 }: {
   cursor?: BoxStyles['cursor'];
-  symbol: SymbolProps['symbol'];
   text: string;
   onClick?: () => void;
   testId?: string;
   tabIndex?: number;
-  tooltipHint: string;
+  tooltipHint?: string;
   tooltipText: string;
-}) {
+} & (
+  | { symbol: SymbolProps['symbol']; icon?: never }
+  | { icon: React.ReactNode; symbol?: never }
+)) {
   return (
     <Stack alignHorizontal="center" space="10px">
       <CursorTooltip
@@ -303,16 +322,33 @@ function ActionButton({
         textColor="labelSecondary"
         hint={tooltipHint}
       >
-        <ButtonSymbol
-          color="accent"
-          cursor={cursor}
-          height="36px"
-          variant="raised"
-          symbol={symbol}
-          testId={testId}
-          onClick={onClick}
-          tabIndex={tabIndex}
-        />
+        {symbol ? (
+          <ButtonSymbol
+            color="accent"
+            cursor={cursor}
+            height="36px"
+            variant="raised"
+            symbol={symbol}
+            testId={testId}
+            onClick={onClick}
+            tabIndex={tabIndex}
+          />
+        ) : (
+          <Box className={widthStyles['36px']} cursor={cursor}>
+            <ButtonWrapper
+              color="accent"
+              cursor={cursor}
+              height="36px"
+              width="full"
+              variant="raised"
+              testId={testId}
+              onClick={onClick}
+              tabIndex={tabIndex}
+            >
+              {icon}
+            </ButtonWrapper>
+          </Box>
+        )}
       </CursorTooltip>
       <Text
         color="labelSecondary"

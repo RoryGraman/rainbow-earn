@@ -2,7 +2,7 @@ import {
   TransactionRequest,
   TransactionResponse,
 } from '@ethersproject/abstract-provider';
-import { BigNumber } from '@ethersproject/bignumber';
+import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 // Keep HDNode for xpub derivation - viem doesn't have extended public key derivation utilities
 import { HDNode } from '@ethersproject/hdnode';
 import AppEth from '@ledgerhq/hw-app-eth';
@@ -11,6 +11,7 @@ import TransportWebHID from '@ledgerhq/hw-transport-webhid';
 import TrezorConnect from '@trezor/connect-web';
 import { Address, Hex, keccak256 } from 'viem';
 
+import { resolveFeeParams } from '~/core/earn/fees';
 // eslint-disable-next-line boundaries/element-types
 import { getHDPathForVendorAndType } from '~/core/keychain/hdPath';
 // eslint-disable-next-line boundaries/element-types
@@ -91,15 +92,20 @@ export const signTransactionFromHW = async (
 
 export const sendTransaction = async (
   transactionRequest: TransactionRequest,
+  // Earn passes the gas limit and fees it computed. Every other caller keeps
+  // Rainbow's own estimate and the fee screen values.
+  options: { useCallerGas?: boolean } = {},
 ): Promise<TransactionResponse> => {
   const { selectedGas } = useGasStore.getState();
   const provider = getProvider({
     chainId: transactionRequest.chainId,
   });
-  const gasLimit = await estimateGasWithPadding({
-    transactionRequest,
-    provider,
-  });
+  const gasLimit =
+    (options.useCallerGas ? transactionRequest.gasLimit : undefined) ??
+    (await estimateGasWithPadding({
+      transactionRequest,
+      provider,
+    }));
 
   const nonce =
     transactionRequest.nonce ??
@@ -108,18 +114,12 @@ export const sendTransaction = async (
       chainId: transactionRequest.chainId as number,
     }));
 
-  const transactionGasParams = {
-    maxFeePerGas:
-      transactionRequest.maxFeePerGas ||
-      (selectedGas.transactionGasParams as TransactionGasParams).maxFeePerGas,
-    maxPriorityFeePerGas:
-      transactionRequest.maxPriorityFeePerGas ||
-      (selectedGas.transactionGasParams as TransactionGasParams)
-        .maxPriorityFeePerGas,
-    gasPrice:
-      transactionRequest.gasPrice ||
-      (selectedGas.transactionGasParams as TransactionLegacyGasParams).gasPrice,
-  };
+  const transactionGasParams = resolveFeeParams<BigNumberish>(
+    transactionRequest,
+    selectedGas.transactionGasParams as TransactionGasParams &
+      TransactionLegacyGasParams,
+    options.useCallerGas === true,
+  );
 
   const params = {
     ...transactionRequest,

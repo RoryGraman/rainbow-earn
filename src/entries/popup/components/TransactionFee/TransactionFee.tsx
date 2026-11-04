@@ -68,7 +68,7 @@ type FeeProps = {
   feeInfoButton?: { onClick: () => void };
 };
 
-function Fee({
+export function Fee({
   accentColor,
   analyticsEvents,
   baseFeeTrend,

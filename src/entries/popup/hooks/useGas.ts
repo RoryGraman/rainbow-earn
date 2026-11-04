@@ -12,7 +12,11 @@ import { useEstimateSwapGasLimit } from '~/core/resources/gas/estimateSwapGasLim
 import { useOptimismL1SecurityFee } from '~/core/resources/gas/optimismL1SecurityFee';
 import { useCurrentCurrencyStore, useGasStore } from '~/core/state';
 import { useNetworkStore } from '~/core/state/networks/networks';
-import { ParsedAsset, ParsedSearchAsset } from '~/core/types/assets';
+import {
+  ParsedAsset,
+  ParsedSearchAsset,
+  ParsedUserAsset,
+} from '~/core/types/assets';
 import { ChainId } from '~/core/types/chains';
 import {
   GasFeeLegacyParamsBySpeed,
@@ -39,6 +43,7 @@ const useGas = ({
   transactionRequest,
   enabled,
   additionalTime,
+  nativeAssetFallback,
 }: {
   chainId: ChainId;
   address?: Address;
@@ -47,10 +52,16 @@ const useGas = ({
   transactionRequest: TransactionRequest | null;
   enabled?: boolean;
   additionalTime?: number;
+  /** Prices the fee when the user's native asset is not available. */
+  nativeAssetFallback?: ParsedUserAsset;
 }) => {
   const { currentCurrency } = useCurrentCurrencyStore();
   const { data: gasData, isLoading } = useGasData({ chainId });
-  const { nativeAsset } = useUserNativeAsset({ chainId, address });
+  const { nativeAsset: userNativeAsset } = useUserNativeAsset({
+    chainId,
+    address,
+  });
+  const nativeAsset = userNativeAsset ?? nativeAssetFallback;
   const needsSecurityFee = useNetworkStore((state) =>
     state.getNeedsL1SecurityFeeChainIds(),
   ).includes(chainId);
@@ -371,6 +382,7 @@ export const useTransactionGas = ({
   defaultSpeed,
   transactionRequest,
   simulatedGasLimit,
+  nativeAssetFallback,
 }: {
   chainId: ChainId;
   address?: Address;
@@ -378,6 +390,8 @@ export const useTransactionGas = ({
   transactionRequest: TransactionRequest;
   /** When set (e.g. from metadata simulation), skip RPC estimate and use this gas limit. */
   simulatedGasLimit?: string;
+  /** Prices the fee when the user's native asset is not available. */
+  nativeAssetFallback?: ParsedUserAsset;
 }) => {
   const useRpcEstimate =
     simulatedGasLimit === undefined || simulatedGasLimit === '';
@@ -398,6 +412,7 @@ export const useTransactionGas = ({
     estimatedGasLimit,
     transactionRequest,
     enabled: true,
+    nativeAssetFallback,
   });
 };
 

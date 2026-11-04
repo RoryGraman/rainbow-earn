@@ -81,4 +81,5 @@ export const ROUTES = {
   HW_WALLET_LIST: '/hw/wallet-list', // hw/walletList/index
   HW_SUCCESS: '/hw/success',
   BUY: '/buy',
+  EARN: '/earn',
 } as const;
