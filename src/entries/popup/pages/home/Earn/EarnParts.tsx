@@ -27,11 +27,10 @@ import { Spinner } from '../../../components/Spinner/Spinner';
 
 import { sanitizeAmount } from './earnFormat';
 
-// USDC blue. The Earn page takes it as its accent, the way a token page takes
-// the token's colour.
+// USDC blue.
 export const EARN_ACCENT = '#2775CA';
 
-// Circle's USDC mark. Inline, because remote token icons need Rainbow's keys.
+// Inline, because remote token icons need Rainbow's keys.
 function UsdcLogo({ size }: { size: number }) {
   return (
     <svg
@@ -89,7 +88,6 @@ export function EarnCoin({
   );
 }
 
-// Rainbow's InfoRow, with an optional colour for the value.
 export function InfoLine({
   symbol,
   label,
@@ -154,8 +152,6 @@ export function EarnCard({ children }: { children: ReactNode }) {
   );
 }
 
-// The amount card from Rainbow's swap screen: coin, large amount, token pill,
-// then balance and Max underneath.
 export function AmountCard({
   value,
   onChange,
@@ -249,8 +245,6 @@ export function AmountCard({
   );
 }
 
-// The full-width primary action used across Rainbow's request screens.
-// `busy` replaces the label with a spinner and the current step.
 export function PrimaryButton({
   label,
   enabled,
@@ -302,7 +296,7 @@ export function PrimaryButton({
 
 export function PoweredBy() {
   return (
-    <Box style={{ opacity: 0.6 }} paddingTop="4px">
+    <Box style={{ opacity: 0.6 }} paddingTop="4px" testId="earn-powered-by">
       <Text align="center" size="12pt" weight="medium" color="labelTertiary">
         {i18n.t('earn.powered_by')}
       </Text>
@@ -310,7 +304,6 @@ export function PoweredBy() {
   );
 }
 
-// A full-page wait, so the page never shows a half-filled screen.
 export function EarnLoading({ title, body }: { title: string; body?: string }) {
   return (
     <Box
@@ -345,9 +338,7 @@ export function EarnLoading({ title, body }: { title: string; body?: string }) {
 const RING = 30;
 const RING_LENGTH = 2 * Math.PI * RING;
 
-// The wait after a signature: a ring that empties as the expected seconds
-// pass, then a spinner if the chain or the Earn service needs longer. The
-// screen always moves, so the wallet never looks frozen.
+// The screen always moves, so the wallet never looks frozen.
 export function EarnCountdown({
   startedAt,
   seconds,
@@ -361,9 +352,7 @@ export function EarnCountdown({
   seconds: number;
   title: string;
   body: string;
-  // What the user does or sees after this wait.
   next?: string;
-  // The words once the ring runs out. Without them, the words stay.
   overtime?: { title: string; body: string };
   detail?: string;
 }) {
@@ -464,7 +453,6 @@ export function EarnCountdown({
   );
 }
 
-// Where the user is in a job with several steps: done, now, and later.
 export function EarnStepper() {
   const job = useEarnRunStore((s) => s.job);
   const jobApprovals = useEarnRunStore((s) => s.jobApprovals);

@@ -52,7 +52,6 @@ const useGas = ({
   transactionRequest: TransactionRequest | null;
   enabled?: boolean;
   additionalTime?: number;
-  /** Prices the fee when the user's native asset is not available. */
   nativeAssetFallback?: ParsedUserAsset;
 }) => {
   const { currentCurrency } = useCurrentCurrencyStore();
@@ -390,7 +389,6 @@ export const useTransactionGas = ({
   transactionRequest: TransactionRequest;
   /** When set (e.g. from metadata simulation), skip RPC estimate and use this gas limit. */
   simulatedGasLimit?: string;
-  /** Prices the fee when the user's native asset is not available. */
   nativeAssetFallback?: ParsedUserAsset;
 }) => {
   const useRpcEstimate =

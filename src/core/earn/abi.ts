@@ -1,6 +1,4 @@
-// The Quicknode Earn contract's deposit call (QuicknodeEarn.sol,
-// `selfBatchDeposit`). The flow decodes the deposit transaction with it, so the
-// review shows what the transaction really does.
+// Decodes the deposit transaction, so the review shows what it really does.
 export const SELF_BATCH_DEPOSIT_ABI = [
   {
     name: 'selfBatchDeposit',

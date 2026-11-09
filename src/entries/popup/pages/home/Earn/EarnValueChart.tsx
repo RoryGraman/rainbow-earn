@@ -22,8 +22,7 @@ const formatWhen = (timestamp: number, hours: number) =>
       : { month: 'short', day: 'numeric' },
   );
 
-// The position value over time as a filled area that starts at $0, so
-// deposits and withdrawals show as steps and yield as the slope between them.
+// The area starts at $0, so deposits and withdrawals show as steps.
 export function EarnValueChart({
   data,
   width,

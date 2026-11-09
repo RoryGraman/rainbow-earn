@@ -127,8 +127,7 @@ describe('currentYield', () => {
     ).toBeCloseTo(10);
   });
 
-  // The snapshot is up to an hour old, so its yield can disagree with the
-  // live value shown beside it.
+  // The snapshot can be an hour old and disagree with the live value.
   it('prefers the live value and lifetime totals over a snapshot', () => {
     const latest = {
       cumulative_yield: 0.05,

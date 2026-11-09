@@ -6,12 +6,10 @@ import { useEarnRunStore } from './run';
 
 let resolveOpen: ((approved: boolean) => void) | null = null;
 
-// Opens the confirmation sheet and waits for the user. Resolves true only
-// when the user presses the approve button. Everything else is a rejection:
-// the reject button, closing the sheet, or a newer request replacing this
-// one. If the popup closes first, the promise never resolves and nothing is
-// signed. With the Earn page closed there is no sheet to show it, so the
-// request is declined at once.
+// Resolves true only when the user presses approve. A reject, a closed sheet,
+// or a newer request is a rejection. If the popup closes first, the promise
+// never resolves and nothing is signed. With the Earn page closed there is no
+// sheet, so the request is declined at once.
 export function requestConfirmation(
   request: EarnConfirmRequest,
 ): Promise<boolean> {

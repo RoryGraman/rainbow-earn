@@ -47,7 +47,6 @@ const VAULTS = [
   vault(7, 200),
 ];
 const SELECTED = [2, 6, 4, 3, 5].map(addr);
-// The vaults a create review lists, largest first.
 const summaryVaults = (addresses: string[]) =>
   addresses.map((address) => ({
     address,
@@ -183,7 +182,6 @@ function memoryDeposits(initial: Record<string, `0x${string}`> = {}) {
 
 function makeDeps(
   overrides: Partial<Record<keyof EarnApi, unknown>> = {},
-  // Kinds of confirmation the simulated user declines.
   opts: { decline?: string[] } = {},
 ) {
   const calls: string[] = [];
@@ -229,7 +227,7 @@ function makeDeps(
       approvalsNeeded: [],
     }),
     getPrefs: vi.fn(async () => ({ hidden_vault_keys: [] as string[] })),
-    // The server's ranking. Here: the largest vaults left visible.
+    // Stand-in ranking: the largest visible vaults.
     rankVaults: vi.fn(
       async ({
         hiddenKeys,
@@ -492,7 +490,6 @@ describe('startStrategy', () => {
       'confirming',
       'active',
     ]);
-    // Each approval step names the one token it approves, for its countdown.
     expect(
       steps.flatMap((s) =>
         s.kind === 'approving'
@@ -589,8 +586,7 @@ describe('startStrategy', () => {
     ).toEqual(SELECTED.slice(0, 4).map((a) => vaultKey(8453, a)));
   });
 
-  // The video case of 2026-10-31: the server enters the visible vaults by its
-  // own APY rank, so the largest are not always the ones it uses.
+  // The server ranks visible vaults by APY, so the largest are not always used.
   it('approves the vaults the server ranks first, not the largest', async () => {
     const rankVaults = vi.fn(async () =>
       [7, 2, 4, 3, 5].map((n) => vaultKey(8453, addr(n))),
@@ -1694,7 +1690,6 @@ describe('explicit approval before every signature', () => {
   });
 });
 
-// An open strategy that holds the five chosen vaults.
 const heldStrategy = (extra: Record<string, unknown> = {}) =>
   strategy('active', {
     net_value_usdc: 600,
@@ -1979,7 +1974,6 @@ describe('increase deposit', () => {
   it('stops reading the value 130 s after the wait starts', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     try {
-      // Each slow read takes 50 s.
       const getStrategy = vi.fn(async () => {
         vi.setSystemTime(Date.now() + 50_000);
         return heldStrategy();
@@ -2471,8 +2465,7 @@ describe('gas for the fee picker on the reviews', () => {
       deps,
     );
     expect(result.strategy.status).toBe('active');
-    // Without every estimate there is no total. The picker prices the first
-    // transaction itself.
+    // Without every estimate there is no total.
     const approvals = confirms.find((c) => c.kind === 'approvals');
     expect(approvals).toMatchObject({ gas: { tx: { to: USDC }, count: 3 } });
     expect(approvals).not.toHaveProperty('gas.gasLimit', expect.anything());

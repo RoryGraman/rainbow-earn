@@ -4,11 +4,9 @@ import { Box } from '~/design-system';
 import { BottomSheet } from '~/design-system/components/BottomSheet/BottomSheet';
 import { zIndexes } from '~/entries/popup/utils/zIndexes';
 
-// Rainbow's BottomSheet sits at the bottom of the nearest positioned ancestor.
-// That ancestor is the top of the page, so when the page is scrolled
-// the sheet opens above the visible area and only the dimmed background shows.
-// A full-screen fixed wrapper makes the sheet follow the visible screen. It
-// ignores clicks while the sheet is closed.
+// Rainbow's BottomSheet sits at the bottom of the nearest positioned ancestor,
+// so on a scrolled page it opens above the visible area. This fixed wrapper
+// follows the screen, and ignores clicks while the sheet is closed.
 export function EarnSheet({
   show,
   onClickOutside,

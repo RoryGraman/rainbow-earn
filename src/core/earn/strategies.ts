@@ -6,21 +6,17 @@ export type StrategyList = {
   closedStrategies: EarnStrategy[];
 };
 
-// The strategy a finished run left behind. `strategy: null` means deleted.
-// `at` is when the run left it, in ms.
+// `strategy: null` means deleted. `at` is when the run left it, in ms.
 export type SettledStrategy = {
   id: string;
   strategy: EarnStrategy | null;
   at?: number;
 };
 
-// The server caches the list for 8 s. A list fetched later than this after a
-// run shows the run's result.
+// The server caches the list for 8 s. A list this long after a run is current.
 const LIST_CURRENT_AFTER_MS = 10_000;
 
-// The list endpoint is cached on the server for a few seconds, so right after
-// a run it can still show the old state. The settled strategy wins until the
-// list catches up.
+// The cached list can lag a run, so the settled strategy wins until it agrees.
 export function resolveStrategy(
   data: StrategyList | undefined,
   settled: SettledStrategy | null,
@@ -62,8 +58,7 @@ export function listAgrees(
   );
 }
 
-// The latest value and yield snapshot of a strategy. The server writes one
-// about every hour.
+// The server writes one snapshot about every hour.
 export type PerformancePoint = {
   cumulative_yield: number;
   weighted_apy: number | null;
@@ -71,10 +66,9 @@ export type PerformancePoint = {
   snapshot_at: string;
 };
 
-// Yield earned so far, in USDC: the live value plus withdrawn minus
-// contributed, so it always agrees with the value shown beside it. The
-// hourly snapshot's figure is only a fallback, because it can be an hour old.
-// Rounded to cents, so vault rounding dust never shows as a red -$0.00.
+// In USDC, from the live value so it agrees with the value shown beside it.
+// The snapshot can be an hour old, so it is only a fallback. Rounded to
+// cents, so vault rounding dust never shows as a red -$0.00.
 export function currentYield(
   strategy: EarnStrategy,
   latest?: PerformancePoint | null,
@@ -103,9 +97,8 @@ type ValueSpan = {
   currentValue: number;
 };
 
-// One strategy's value at any time (ms): zero before it opened and after it
-// closed (`endedAt`), interpolated between snapshots, and ending at the value
-// now, or at the final value at the close.
+// Times in ms. Zero before the open and after the close; the last point is
+// `currentValue`, at the close or now.
 function valueAtTime(
   snapshots: PerformancePoint[] | undefined,
   { to, startedAt, endedAt, currentValue }: ValueSpan,
@@ -145,8 +138,7 @@ const evenGrid = (from: number, to: number, buckets: number) =>
     (_, i) => from + (i * (to - from)) / buckets,
   );
 
-// The position value on an even time grid from `from` to `to` (ms), so the
-// chart's x-axis is real time.
+// An even grid in ms, so the chart's x-axis is real time.
 export function valueChartData(
   snapshots: PerformancePoint[] | undefined,
   { from, buckets, ...span }: ValueSpan & { from: number; buckets: number },
@@ -165,10 +157,8 @@ export type ChartEntry = {
   currentValue: number;
 };
 
-// Several strategies added together. Between two of them the sum is zero,
-// because nothing was invested. Each open and close, and 1 ms outside it, is
-// a point of its own, so the edges are sharp and a strategy shorter than one
-// step of the even grid still shows.
+// Each open and close, and 1 ms outside it, gets its own point, so edges are
+// sharp and a strategy shorter than one grid step still shows.
 export function combinedValueChartData(
   entries: ChartEntry[],
   { from, to, buckets }: { from: number; to: number; buckets: number },
@@ -195,9 +185,6 @@ export function combinedValueChartData(
     }));
 }
 
-// What the chart shows: the open strategy, and every closed strategy this
-// wallet made on the chain that closed after `from` (ms). A closed row
-// without a close time is left out.
 export function chartStrategies(
   data: StrategyList | undefined,
   open: EarnStrategy,
@@ -229,8 +216,7 @@ export function historyStart(strategies: EarnStrategy[]): number | undefined {
 
 export const CHART_WINDOW_HOURS = [24, 168, 720, 2160];
 
-// The chart ranges worth showing for a position of this age: each range up to
-// the first one that covers the whole position. That one opens first.
+// Ranges up to the first that covers the whole position, which opens first.
 export function chartWindows(ageHours: number | null) {
   if (ageHours === null) return { shown: CHART_WINDOW_HOURS, initial: 168 };
   const fit = CHART_WINDOW_HOURS.findIndex((hours) => hours >= ageHours);
@@ -239,8 +225,6 @@ export function chartWindows(ageHours: number | null) {
   return { shown, initial: shown[shown.length - 1] };
 }
 
-// The APY to show. Realized APY first, then the latest snapshot, then the
-// value-weighted APY the positions were entered at.
 export function strategyApy(
   strategy: EarnStrategy,
   latest?: PerformancePoint | null,

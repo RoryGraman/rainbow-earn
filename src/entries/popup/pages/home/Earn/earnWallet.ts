@@ -31,17 +31,13 @@ import { personalSign, sendTransaction } from '../../../handlers/wallet';
 const APPROVE_SELECTOR = '0x095ea7b3';
 const EARN_APP_HOST = 'earn.quicknode.com';
 const BATCH_WAIT_MS = 120_000;
-// Off for the demo: one transaction per approval. A batch review has no fee
-// picker; its fee is the network's current fee.
+// Off for the demo: a batch review has no fee picker.
 const BATCH_APPROVALS = false;
 
-// After a batch fails, the next run in this session uses one transaction per
-// approval, with its own sheet. A check that passes here but fails in the
-// background must not trap the user in the same failure.
+// A check that passes here but fails in the background must not trap the user
+// in the same failure, so a failed batch turns batching off for this session.
 let batchFailedThisSession = false;
 
-// Connects the Earn flow to Rainbow's keychain, fee logic, and pending
-// transaction list. The flow itself knows nothing about the wallet.
 export function createEarnDeps({
   address,
   settings,
@@ -70,8 +66,6 @@ export function createEarnDeps({
     data,
     gasLimit: hint,
   }: EarnSendRequest) => {
-    // The fee the user picked in the review. Without one for this chain, the
-    // network's current fee.
     const fees: FeeFields<bigint> =
       pickedFeeFor(chainId, useEarnRunStore.getState().pickedFee) ??
       (await getViemClient({ chainId }).estimateFeesPerGas());
@@ -122,9 +116,8 @@ export function createEarnDeps({
     return { hash: result.hash as Hex };
   };
 
-  // Rainbow's Smart Wallet path, the one its own batch request screen uses.
-  // It needs the delegation feature, a software wallet, and Rainbow's
-  // platform API to confirm the chain is supported.
+  // Rainbow's Smart Wallet path. It needs the delegation feature, a software
+  // wallet, and Rainbow's platform API to confirm the chain.
   const canBatch = async (chainId: number) => {
     if (!BATCH_APPROVALS || batchFailedThisSession) return false;
     if (!getDelegationAvailable(address).available) return false;

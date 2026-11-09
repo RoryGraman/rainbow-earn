@@ -8,8 +8,7 @@ const keyOf = (vault: EarnVault) => vaultKey(vault.chainId, vault.vaultAddress);
 // The server asks for twice the liquidity floor before it enters a vault.
 const ENTRY_LIQUIDITY_MULTIPLIER = 2;
 
-// The server rejects a hide list that drops the eligible count below
-// max_positions + 1. One extra vault stays visible to satisfy that rule.
+// The server rejects a hide list that leaves under max_positions + 1 eligible.
 const EXTRA_VISIBLE_VAULTS = 1;
 
 const bySize = (a: EarnVault, b: EarnVault) =>
@@ -18,8 +17,8 @@ const bySize = (a: EarnVault, b: EarnVault) =>
 const hasPositiveApy = (vault: EarnVault) =>
   vault.apy !== null && vault.apy > 0;
 
-// Drops the vaults a wallet hid on its global list. The server merges that
-// list into every strategy, so the client must not count those vaults.
+// The server merges the wallet's global hide list into every strategy, so the
+// client must not count those vaults.
 export function withoutHiddenVaults(
   vaults: EarnVault[],
   hiddenKeys: Iterable<string>,
@@ -28,17 +27,11 @@ export function withoutHiddenVaults(
   return vaults.filter((vault) => !hidden.has(keyOf(vault)));
 }
 
-// The deposit endpoint chooses vaults itself. To steer it to the largest
-// vaults, every vault outside the N + 1 largest stays in the strategy hide
-// list. The server then enters the N of those with the best APY, after its
-// capacity and allowance checks. Only the server ranking (`rankedVaults`)
-// says which N: it reads APY to more decimals than the vault list.
-//
-// Server order (ranking-stages.ts): hidden, TVL floor, liquidity floor,
-// positive APY, then capacity and allowance. The N + 1 rule counts the
-// vaults left after the positive-APY stage. So a vault that fails a floor
-// or has no APY never counts, and hiding it is always allowed. A vault at
-// capacity still counts, so it may fill a slot when too few are open.
+// The deposit endpoint picks vaults itself. To steer it, every vault outside
+// the N + 1 largest goes in the hide list; it enters the N best by APY.
+// The N + 1 rule counts only vaults past the server's TVL, liquidity and
+// positive-APY stages (ranking-stages.ts), so hiding any other is allowed. A
+// vault at capacity still counts, so it may fill a slot when too few are open.
 export function pickVisibleVaults(
   vaults: EarnVault[],
   chainId: number,
@@ -75,7 +68,6 @@ export function pickVisibleVaults(
   return { visible, hiddenKeys };
 }
 
-// The visible vaults the server ranked, largest first.
 export function rankedVaults(
   visible: EarnVault[],
   rankedKeys: string[],
@@ -84,8 +76,7 @@ export function rankedVaults(
   return visible.filter((vault) => ranked.has(keyOf(vault))).sort(bySize);
 }
 
-// The visible vaults of a strategy that already exists, from its own hide
-// list plus the wallet's global hide list.
+// `hiddenKeys` is the strategy's hide list plus the wallet's global one.
 export function visibleVaultsOf(
   vaults: EarnVault[],
   chainId: number,
@@ -97,8 +88,7 @@ export function visibleVaultsOf(
   ).sort(bySize);
 }
 
-// Some vaults share a name. Each of those gets its short address, so the
-// user can tell the rows apart. Null for a unique name.
+// A short address for each vault whose name repeats. Null for a unique name.
 export function repeatedNameDetails(
   vaults: { name: string; address: string }[],
 ): (string | null)[] {

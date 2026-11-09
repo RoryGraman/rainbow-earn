@@ -111,8 +111,8 @@ export function createEarnApi(
       return request<EarnConfig>('/v1/config');
     },
 
-    // The vaults the server would enter for these settings, best first. Its
-    // APY has more decimals than the vault list, so only it can break ties.
+    // Best first. The server's APY has more decimals than the vault list, so
+    // only this ranking can break ties.
     async rankVaults({
       chainId,
       capitalUsdc,
@@ -176,7 +176,7 @@ export function createEarnApi(
 
     getApprovals,
 
-    // The USD price of each chain's native gas token, by chain id.
+    // In USD, keyed by chain id.
     async getNativePrices(): Promise<Record<number, number>> {
       const { chains } = await request<{ chains: Record<string, number> }>(
         '/v1/prices',
@@ -224,7 +224,7 @@ export function createEarnApi(
       );
     },
 
-    // The limits of a partial withdrawal. Writes nothing.
+    // Writes nothing, despite the POST.
     getWithdrawQuote(id: string) {
       return request<EarnWithdrawQuote>(
         `/v1/strategies/${id}/calldata/withdraw`,
@@ -232,7 +232,6 @@ export function createEarnApi(
       );
     },
 
-    // The newest value and yield snapshot, or null before the first one.
     async getLatestPerformance(id: string): Promise<PerformancePoint | null> {
       const { snapshots } = await request<{ snapshots: PerformancePoint[] }>(
         `/v1/strategies/${id}/performance?hours=48`,
@@ -240,7 +239,7 @@ export function createEarnApi(
       return snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
     },
 
-    // Every snapshot in the trailing window, oldest first.
+    // Oldest first.
     async getPerformance(
       id: string,
       hours: number,

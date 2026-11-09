@@ -288,7 +288,6 @@ function ActionButtonsSection() {
   );
 }
 
-// `icon` draws a custom glyph in place of an SF Symbol, on the same button.
 function ActionButton({
   cursor = 'default',
   symbol,

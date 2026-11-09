@@ -4,15 +4,9 @@ export type FeeFields<T> = {
   gasPrice?: T;
 };
 
-// Picks the fee fields for a transaction.
-//
-// Default (`useCallerFees` false): the request wins field by field, and the
-// fee screen's stored values fill the gaps. This is how Rainbow has always
-// worked, so existing callers see no change.
-//
-// With `useCallerFees` and a caller fee set: only the caller's fields are
-// used. A stored gasPrice would break an EIP-1559 transaction, and a stored
-// value could belong to another chain. A zero priority fee stays zero.
+// With `useCallerFees` and a caller fee, only the caller's fields count, and a
+// zero priority fee stays zero. A stored gasPrice would break an EIP-1559
+// transaction, and a stored value could belong to another chain.
 export function resolveFeeParams<T>(
   request: FeeFields<T>,
   stored: FeeFields<T>,
@@ -46,8 +40,8 @@ const feeFormat = new Intl.NumberFormat('en-US', {
 export const displayFeeUsd = (usd: number) =>
   usd > 0 && usd < 0.005 ? '< $0.01' : feeFormat.format(usd);
 
-// The gas limit a transaction is sent with: Rainbow's padded estimate, never
-// below the Earn service's hint. Undefined, never zero, when neither is known.
+// Rainbow's padded estimate, never below the Earn hint. Undefined, never zero,
+// when neither is known.
 export function sendGasLimit(
   estimate: bigint | null | undefined,
   hint: bigint | undefined,
@@ -56,8 +50,7 @@ export function sendGasLimit(
   return limit > 0n ? limit : undefined;
 }
 
-// The fee the user picked in a review, as Rainbow's fee picker gives it: hex
-// strings, for one chain.
+// Hex strings, as Rainbow's fee picker gives them, for one chain.
 export type EarnPickedFee = {
   chainId: number;
   maxFeePerGas?: string;
@@ -65,8 +58,7 @@ export type EarnPickedFee = {
   gasPrice?: string;
 };
 
-// The fee fields of a send from the picked fee. Undefined for another chain,
-// no pick, or a pick that is not a number, so the caller estimates its own.
+// Undefined for another chain or a bad pick, so the caller estimates its own.
 export function pickedFeeFor(
   chainId: number,
   picked: EarnPickedFee | null | undefined,
@@ -87,9 +79,8 @@ export function pickedFeeFor(
   }
 }
 
-// A stand-in for the wallet's native asset in Rainbow's fee math, when
-// Rainbow's asset service has none (a build without Rainbow's keys). The fee
-// math reads only the symbol, the decimals and the USD price.
+// For Rainbow's fee math when its asset service has no native asset (a build
+// without Rainbow's keys). The fee math reads only these three fields.
 export function nativeAssetForFee(symbol: string, usd: number | undefined) {
   return usd !== undefined && Number.isFinite(usd) && usd > 0
     ? { symbol, decimals: 18, price: { value: usd } }

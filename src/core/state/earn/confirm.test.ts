@@ -44,7 +44,6 @@ describe('requestConfirmation', () => {
     await expect(second).resolves.toBe(true);
   });
 
-  // The user left the Earn page while the flow was between steps.
   it('declines at once, with no sheet, when the Earn page is not open', async () => {
     useEarnRunStore.setState({ pageOpen: false });
     await expect(requestConfirmation(request)).resolves.toBe(false);
@@ -85,7 +84,6 @@ describe('confirmForWallet', () => {
     );
   });
 
-  // The user switched wallets while the sheet was open, then approved.
   it('declines an approval given after a wallet switch', async () => {
     let selected = runWallet;
     const result = confirmForWallet(request, runWallet, () => selected);

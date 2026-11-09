@@ -37,7 +37,6 @@ const COUNTDOWN_JOBS = new Set<EarnJob>([
   'decrease',
 ]);
 
-// The job whose full-page countdown shows now, or null.
 export const countdownJob = ({
   job,
   waitStartedAt,
@@ -62,12 +61,10 @@ const JOB_STEP_KEYS: Partial<
   },
 };
 
-// The `earn.*` translation key for a progress step of this job.
+// The translation key, under `earn.`.
 export const stepKey = (kind: EarnFlowStep['kind'], job: EarnJob | null) =>
   (job && JOB_STEP_KEYS[job]?.[kind]) ?? `step_${kind}`;
 
-// The steps the stepper shows. A decrease or a close shows them only when it
-// needs approvals first.
 export type EarnPhase = 'sign' | 'approve' | 'deposit' | 'withdraw';
 
 export const phasesOf = (
@@ -103,8 +100,7 @@ const PHASE_OF_REQUEST: Record<EarnConfirmRequest['kind'], EarnPhase> = {
   withdraw: 'withdraw',
 };
 
-// The current step of the stepper. An open review counts first. A step the
-// job skips counts as done. The length means every step is done.
+// An open review counts first. `phases.length` means every phase is done.
 export function phaseIndex(
   phases: EarnPhase[],
   step: EarnFlowStep | null,
@@ -120,8 +116,7 @@ export function phaseIndex(
   return Math.max(phase ? phases.indexOf(phase) : 0, 0);
 }
 
-// The stepper of the running job, or null. Between a decline or an error and
-// the end of the job, step and review are both empty, and it hides.
+// Hidden between a decline or an error and the end of the job.
 export function stepperOf({
   job,
   jobApprovals,
@@ -146,9 +141,7 @@ export type EarnCopy = {
   amountUsdc?: number;
 };
 
-// What the countdown says: what this transaction does, and what comes next.
-// An approval keeps its own words when its ring runs over, because more
-// steps follow.
+// An approval keeps its own words when its ring runs over: more steps follow.
 export function waitCopy(
   step: EarnFlowStep,
   job: EarnJob,
@@ -236,17 +229,12 @@ interface EarnRunState {
   running: boolean;
   // What the last finished run left behind, until the server list agrees.
   settled: (SettledStrategy & { wallet: string }) | null;
-  // The settings sheet renders beside the Earn page content, like Rainbow's
-  // other sheets, so it sits on the popup frame and not inside the scrolling
-  // content.
+  // The sheet renders on the popup frame, outside the scrolling page content.
   settingsOpen: boolean;
-  // The open strategy whose settings the sheet edits. Null edits the defaults
-  // for new deposits.
+  // Null edits the defaults for new deposits.
   settingsStrategy: EarnStrategy | null;
-  // The increase or decrease deposit sheet, with the strategy it acts on.
   amountSheet: EarnAmountSheetState | null;
-  // The signature or transaction waiting for the user's approval. The
-  // confirmation sheet shows it. See `confirm.ts` for how it is answered.
+  // The request waiting for the user's approval. See `confirm.ts`.
   confirmation: EarnConfirmRequest | null;
   // True while the Earn page, and with it the confirmation sheet, is mounted.
   pageOpen: boolean;

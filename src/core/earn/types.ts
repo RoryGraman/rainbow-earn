@@ -91,8 +91,6 @@ export type EarnWithdrawCalldata = {
   partial?: { feeUsdc: number; receiveUsdc: number };
 };
 
-// The limits for a partial withdrawal. `fullCloseOnly` means only a full close
-// is allowed.
 export type EarnWithdrawQuote = {
   kind: 'withdraw_quote';
   netValueUsdc: number;

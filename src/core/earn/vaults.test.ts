@@ -78,8 +78,7 @@ describe('pickVisibleVaults', () => {
     );
     expect(hiddenKeys).toContain(keyOfVault(90));
     expect(hiddenKeys).toContain(keyOfVault(92));
-    // The list rounds APY to 2 decimals. The server may count a 0.00 vault
-    // as positive, so hiding it could break the N + 1 rule.
+    // The list rounds APY, so a 0.00 vault may still count on the server.
     expect(hiddenKeys).not.toContain(keyOfVault(91));
   });
 
@@ -120,8 +119,7 @@ describe('pickVisibleVaults', () => {
     const { visible, hiddenKeys } = pickVisibleVaults(vaults, 8453, 5, {
       minTvlUsd: 400,
     });
-    // A vault under the floor never counts on the server, so hiding it is
-    // always allowed.
+    // The server never counts a vault under the floor, so hiding it is safe.
     expect(names(visible)).toEqual([
       'Vault 2',
       'Vault 6',
@@ -177,8 +175,7 @@ describe('pickVisibleVaults', () => {
 });
 
 describe('rankedVaults', () => {
-  // The video case of 2026-10-31: the server entered Gauntlet and Spark, not
-  // the two largest. The screen must show the server's choice.
+  // The server can enter smaller vaults, and the screen must show its choice.
   it('keeps the visible vaults the server ranked, largest first', () => {
     const visible = [
       vault(1, 450, { name: 'Spark' }),
@@ -202,8 +199,7 @@ describe('rankedVaults', () => {
 });
 
 describe('repeatedNameDetails', () => {
-  // Base has two "Steakhouse Prime USDC" vaults, and both addresses start
-  // with 0xbeef. Only the full short form tells them apart.
+  // The two real Steakhouse Prime vaults start with 0xbeef; the tail differs.
   it('gives a short address to each vault whose name repeats', () => {
     expect(
       repeatedNameDetails([

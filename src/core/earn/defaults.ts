@@ -10,8 +10,7 @@ export const USDC_DECIMALS = 6;
 export const DEFAULT_MIN_STRATEGY_USDC = 500;
 export const USDC_BASE_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 export const EARN_TERMS_URL = 'https://www.quicknode.com/terms-of-service';
-// Every strategy this wallet creates has this name. The chart's history
-// counts only these, not strategies made in the Earn web app.
+// The chart counts only strategies with this name, not ones from the web app.
 export const EARN_STRATEGY_NAME = 'Rainbow Earn';
 
 // Publishable keys are public by design (see the Earn API guide).

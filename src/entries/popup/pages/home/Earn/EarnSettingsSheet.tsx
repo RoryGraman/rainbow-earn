@@ -128,7 +128,6 @@ function NumberSetting({
   );
 }
 
-// The defaults used for the next new deposit.
 function DefaultsForm() {
   const settings = useEarnStore((s) => s.settings);
   const updateSettings = useEarnStore((s) => s.updateSettings);
@@ -218,8 +217,7 @@ const strategyValue = (strategy: EarnStrategy, key: NumericKey) => {
   }
 };
 
-// The advanced settings of the open strategy. Saving signs one message, after
-// the user approves it.
+// Saving signs one message, after the user approves it.
 function StrategyForm({
   strategy,
   onSaved,
@@ -298,9 +296,6 @@ function StrategyForm({
   );
 }
 
-// Rendered once by the Earn page, beside its content. Opened through
-// `useEarnRunStore`: with an open strategy it shows that strategy's advanced
-// settings, without one it shows the defaults for new deposits.
 export function EarnSettingsSheet() {
   const show = useEarnRunStore((s) => s.settingsOpen);
   const strategy = useEarnRunStore((s) => s.settingsStrategy);

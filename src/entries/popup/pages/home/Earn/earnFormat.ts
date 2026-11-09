@@ -22,13 +22,12 @@ export const copyText = ({ key, count, vault, amountUsdc }: EarnCopy) =>
     vault,
     amount: amountUsdc === undefined ? undefined : formatUsd(amountUsdc),
   });
-// Keeps digits and one dot, with at most six decimals (USDC has six).
+// USDC has six decimals.
 export const sanitizeAmount = (raw: string) => {
   const cleaned = raw.replace(/[^0-9.]/g, '');
   const [whole, ...rest] = cleaned.split('.');
   return rest.length ? `${whole}.${rest.join('').slice(0, 6)}` : whole;
 };
-// +$1.23 or -$0.50, so a gain and a loss read at a glance.
 export const formatSignedUsd = (value: number) =>
   `${value < 0 ? '-' : '+'}${usd.format(Math.abs(value))}`;
 export const formatCompactUsd = (value: number) => compactUsd.format(value);
@@ -49,9 +48,7 @@ export function stepLabel(step: EarnFlowStep, job: EarnJob | null): string {
   }
 }
 
-// Flow and API errors carry a code. A known code maps to a translated
-// message. Anything else shows its own text, cut before the long JSON that
-// wallet and RPC errors append after a "[" marker.
+// Cut before the long JSON that wallet and RPC errors append after a "[".
 export function errorMessage(error: unknown): string {
   const raw = error instanceof Error ? error.message : String(error);
   const fallback = raw.split('[')[0].trim() || i18n.t('earn.error_unknown');

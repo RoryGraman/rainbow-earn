@@ -33,8 +33,7 @@ import { copyText, stepLabel } from './earnFormat';
 import { useEarnStrategy } from './useEarnData';
 import { useEarnRunner } from './useEarnRunner';
 
-// The settings button on the right of the navbar, styled like the X on the
-// left. An open strategy has its own settings row.
+// An open strategy has its own settings row.
 export function EarnSettingsAction() {
   const { currentAddress } = useCurrentAddressStore();
   const { strategy } = useEarnStrategy(currentAddress);
@@ -54,9 +53,8 @@ export function EarnSettingsAction() {
   );
 }
 
-// The Earn page with its sheets. Leaving the page declines an open review and
-// closes the other sheets. Reviews asked for while it is closed are declined
-// too (see `confirm.ts`), so no request waits out of sight.
+// Leaving the page declines an open review, and `confirm.ts` declines reviews
+// asked for while it is closed, so no request waits out of sight.
 export function EarnPage() {
   useEffect(() => {
     const runState = useEarnRunStore.getState();
@@ -86,21 +84,17 @@ export function Earn() {
   const { strategy, data: strategyList } = useEarnStrategy(currentAddress);
   const runner = useEarnRunner(currentAddress);
 
-  // Any open strategy except an unfunded one: active, closing, paused.
   const funded = strategy && strategy.status !== 'pending_setup';
   const pending = strategy?.status === 'pending_setup' ? strategy : null;
   const waitStartedAt = useEarnRunStore((s) => s.waitStartedAt);
   const job = useEarnRunStore((s) => s.job);
-  // A full-page countdown for each transaction, until the chain and the Earn
-  // service catch up. An approval or a withdrawal starts its ring just before
-  // the send. A deposit starts its ring after the send.
+  // A full-page countdown until the chain and the Earn service catch up.
   const wait = useEarnRunStore(countdownJob);
   const waitStep = useEarnRunStore((s) => s.waitStep);
   const copy = wait && waitStep ? waitCopy(waitStep, wait) : null;
   // An open review shows the stepper in its own sheet.
   const reviewOpen = useEarnRunStore((s) => s.confirmation !== null);
 
-  // The countdown and the screen after it each open at the top.
   const containerRef = useContainerRef();
   const lastWait = useRef(wait);
   useEffect(() => {
@@ -186,7 +180,7 @@ export function Earn() {
             />
           )}
 
-          {!funded && !wait && <PoweredBy />}
+          <PoweredBy />
         </Stack>
       </Box>
     </AccentColorProvider>

@@ -88,7 +88,6 @@ function Column({
   );
 }
 
-// The screen of an open strategy, laid out like a Rainbow token page.
 export function EarnPosition({
   strategy,
   list,
@@ -153,7 +152,6 @@ export function EarnPosition({
       if (s.id === strategy.id) {
         return { snapshots, startedAt: startedAtOf, currentValue: chartValue };
       }
-      // A closed strategy ends at its close, worth its final value.
       const closedAt = Date.parse(s.deactivated_at ?? '');
       const last = snapshots?.[snapshots.length - 1]?.total_value_usdc;
       return {
@@ -204,7 +202,6 @@ export function EarnPosition({
     earned === null || earned === 0 ? 'label' : earned > 0 ? 'green' : 'red';
   const status = statusOf(strategy, pausedCount);
 
-  // Show the screen only when every figure and the chart can fill at once.
   // A range switch keeps the previous series, so it does not come back here.
   const ready =
     latestFetched &&

@@ -27,11 +27,10 @@ import { triggerToast } from '../../../components/Toast/Toast';
 import { errorMessage, formatUsd } from './earnFormat';
 import { createEarnDeps } from './earnWallet';
 
-// The message a finished job leaves.
 type EarnToast = Parameters<typeof triggerToast>[0];
 
-// Runs one Earn job at a time. The run state lives in a store outside React,
-// so leaving the Earn page cannot drop it or start a second run.
+// The run state lives in a store outside React, so leaving the Earn page
+// cannot drop it or start a second run.
 export function useEarnRunner(address: Address) {
   const queryClient = useQueryClient();
   const step = useEarnRunStore((s) => s.step);
@@ -65,7 +64,7 @@ export function useEarnRunner(address: Address) {
         // A countdown holds until the new figures are in. Other runs end now.
         if (!countdownJob(useEarnRunStore.getState())) runState.setStep(null);
         // refetchQueries also reaches the position queries, unmounted during
-        // the wait. The rest of Earn refreshes in the background.
+        // the wait.
         await Promise.all(
           ['strategies', 'performance', 'performance-series'].map((key) =>
             queryClient.refetchQueries({ queryKey: ['earn', key] }),
@@ -87,8 +86,7 @@ export function useEarnRunner(address: Address) {
       run('start', async (deps) => {
         const earn = useEarnStore.getState();
         const key = pendingKey(earn.settings.environment, address);
-        // A strategy saved by an earlier run that did not finish. It is only
-        // a hint: the flow drops it when the server no longer has it.
+        // Only a hint: the flow drops it when the server no longer has it.
         const hint = resumeStrategyId ? undefined : earn.pendingStrategies[key];
         try {
           const result = await startStrategy(

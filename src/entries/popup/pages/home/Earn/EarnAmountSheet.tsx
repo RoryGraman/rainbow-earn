@@ -69,8 +69,7 @@ function AmountForm({
   const problem = amountProblem(amount, limits);
   const canContinue = ready && !fullCloseOnly && problem === null;
   // A withdrawal that would leave less than the strategy minimum is a close.
-  // Offer that instead. With paused positions the close needs the warning on
-  // the main screen first.
+  // With paused positions the close needs the warning on the main screen first.
   const closeInstead =
     !increase && ready && (fullCloseOnly || problem === 'too_high');
 
@@ -212,9 +211,8 @@ function AmountForm({
   );
 }
 
-// Rendered once by the Earn page, like the other Earn sheets. It only
-// collects an amount. Nothing is signed here: Continue starts the flow, and the
-// flow stops at an approval sheet before every signature.
+// Nothing is signed here: the flow stops at an approval sheet before every
+// signature.
 export function EarnAmountSheet() {
   const sheet = useEarnRunStore((s) => s.amountSheet);
   const setAmountSheet = useEarnRunStore((s) => s.setAmountSheet);

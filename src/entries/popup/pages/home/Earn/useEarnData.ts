@@ -63,14 +63,9 @@ export function useUsdcBalance(
   });
 }
 
-// The vaults the deposit will use, by the same rules as the flow.
-// - New deposit: the settings pick, after the wallet's global hide list.
-// - Unfinished deposit: the strategy's own hide list, floors and position
-//   limit, not today's settings, because a resume funds the strategy as it
-//   was made.
-// The server ranking chooses which visible vaults the deposit enters.
-// `capitalUsdc` is the amount to rank a new deposit for: the server drops a
-// vault whose capacity is below the amount per vault.
+// Same rules as the flow. A resume uses the strategy's own settings, not
+// today's, because it funds the strategy as it was made. The server drops a
+// vault whose capacity is below the amount per vault, so rank for the amount.
 export function useTopVaults(
   address: Address,
   pending: EarnStrategy | null,
@@ -138,8 +133,7 @@ export function useTopVaults(
       return { selected: rankedVaults(visible, ranked), count };
     },
     refetchInterval: 60_000,
-    // Keeps the last list on screen while a new amount is ranked. Any other
-    // change (settings, a pending strategy) shows the loading state instead.
+    // Only a new amount keeps the last list on screen while it is ranked.
     placeholderData: (previous, previousQuery) =>
       previousQuery &&
       JSON.stringify(previousQuery.queryKey.slice(0, -1)) ===
@@ -166,7 +160,6 @@ export function useEarnStrategy(address: Address) {
     refetchInterval: 15_000,
   });
 
-  // Drop the run result once the server list shows the same state.
   useEffect(() => {
     if (
       settled &&
@@ -184,7 +177,6 @@ export function useEarnStrategy(address: Address) {
   return { ...query, strategy };
 }
 
-// The newest value and yield snapshot of the open strategy.
 export function useLatestPerformance(strategyId: string | undefined) {
   const api = useEarnApi();
   const environment = useEarnStore((s) => s.settings.environment);
@@ -207,10 +199,9 @@ export function usePerformanceSeries(strategyId: string, hours: number) {
   });
 }
 
-// The value series of the closed strategies on the chart, by id. Their
-// snapshots never change, so they are read once per range and never on a
-// timer; a key of their own keeps them out of the refresh after each job. A
-// failed read leaves that strategy flat at its final value until a later read.
+// Closed snapshots never change: read once per range, never on a timer, and a
+// key of their own keeps them out of the refresh after each job. A failed read
+// leaves that strategy flat at its final value until a later read.
 export function useClosedSeries(strategyIds: string[], hours: number) {
   const api = useEarnApi();
   const environment = useEarnStore((s) => s.settings.environment);
@@ -234,8 +225,7 @@ export function useClosedSeries(strategyIds: string[], hours: number) {
   });
 }
 
-// The USD price of each chain's native gas token. It prices the fee on the
-// reviews when Rainbow's asset service has no price.
+// Prices the review fee when Rainbow's asset service has no price.
 export function useNativePrices() {
   const api = useEarnApi();
   const environment = useEarnStore((s) => s.settings.environment);
@@ -246,7 +236,7 @@ export function useNativePrices() {
   });
 }
 
-// The limits of a partial withdrawal. Read fresh each time the sheet opens.
+// Read fresh each time the sheet opens.
 export function useWithdrawQuote(strategyId: string, enabled: boolean) {
   const api = useEarnApi();
   const environment = useEarnStore((s) => s.settings.environment);

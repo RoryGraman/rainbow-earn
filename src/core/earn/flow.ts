@@ -35,7 +35,6 @@ import {
 
 export type EarnFlowStep =
   | { kind: 'selecting' }
-  // An unfunded strategy from an earlier run continues. It signs nothing new.
   | { kind: 'resuming' }
   | { kind: 'signing' }
   | { kind: 'creating' }
@@ -43,8 +42,7 @@ export type EarnFlowStep =
       kind: 'approving';
       index: number;
       total: number;
-      // What this transaction approves: one token, or every token of a Smart
-      // Wallet batch.
+      // One token, or every token of a Smart Wallet batch.
       items: EarnApprovalItem[];
       purpose: 'deposit' | 'withdraw';
     }
@@ -64,9 +62,8 @@ export type EarnSendRequest = {
   gasLimit?: bigint;
 };
 
-// What the wallet's fee picker needs to price a review: its first
-// transaction, and the total gas of the review's transactions on that chain.
-// The total is missing when one of them has no estimate.
+// gasLimit is the total for the review's transactions on chainId. It is
+// missing when one of them has no estimate.
 export type EarnReviewGas = {
   chainId: number;
   tx: EarnSendRequest;
@@ -74,30 +71,25 @@ export type EarnReviewGas = {
   count: number;
 };
 
-// Every field comes from the approve calldata itself, checked against what
-// the Earn service says it is, so the sheet shows what gets signed.
+// Built from the decoded approve calldata, so the sheet shows what gets signed.
 export type EarnApprovalItem = {
   token: string;
-  // The vault name, or "USDC". Missing when the flow does not know the name.
   label?: string;
   kind: 'usdc' | 'share';
   chainId: number;
   spender: string;
-  // Share tokens are approved without a limit. USDC is approved for the
-  // exact deposit amount.
   unlimited: boolean;
   amountUsdc?: number;
 };
 
-// What the user is asked to approve. The wallet shows exactly this before it
-// signs or sends anything.
+// The wallet shows exactly this before it signs or sends anything.
 export type EarnConfirmRequest =
   | {
       kind: 'sign_message';
       action: string;
       message: string;
-      // What a new strategy commits to. Set for strategy.create. The vaults
-      // are the server's ranking now; the deposit review shows the final split.
+      // Set for strategy.create. The vaults are the server's ranking at create
+      // time; the deposit review shows the final split.
       summary?: {
         capitalUsdc: number;
         vaults: Array<{ address: string; name: string; apy: number | null }>;
@@ -114,7 +106,6 @@ export type EarnConfirmRequest =
       purpose: 'deposit' | 'withdraw';
       spender: string;
       items: EarnApprovalItem[];
-      // True when every approval goes out as one Smart Wallet transaction.
       batched?: boolean;
       gas?: EarnReviewGas;
     }
@@ -128,7 +119,6 @@ export type EarnConfirmRequest =
     }
   | {
       kind: 'withdraw';
-      // Set for a partial withdrawal: what leaves, the fee, what you receive.
       partial?: { amountUsdc: number; feeUsdc: number; receiveUsdc: number };
       // Set for a close: the live value of the positions it withdraws.
       amountUsdc?: number;
@@ -145,14 +135,12 @@ export interface EarnFlowDeps {
   address: Address;
   chainId: number;
   siwe: { domain: string; uri: string };
-  // Shows the request and resolves true only when the user approves it.
-  // The flow never signs or sends before this resolves true.
+  // Resolves true only when the user approves. Nothing signs or sends before.
   confirm: (request: EarnConfirmRequest) => Promise<boolean>;
   signMessage: (message: string) => Promise<Hex>;
   sendTransaction: (tx: EarnSendRequest) => Promise<{ hash: Hex }>;
   waitForReceipt: (hash: Hex, chainId: number) => Promise<void>;
-  // Rainbow's Smart Wallet (EIP-7702): several calls in one transaction.
-  // `canBatch` must not sign or send anything.
+  // Rainbow Smart Wallet (EIP-7702) batch. `canBatch` must not sign or send.
   canBatch?: (chainId: number) => Promise<boolean>;
   sendBatch?: (txs: EarnSendRequest[]) => Promise<void>;
   // Deposit hashes by strategy id. They stop a resume from depositing twice.
@@ -161,8 +149,7 @@ export interface EarnFlowDeps {
     set: (strategyId: string, hash: Hex | null) => void;
   };
   onStep?: (step: EarnFlowStep) => void;
-  // The padded gas estimate of one transaction, for the review. It must not
-  // sign or send anything. Null when it cannot tell.
+  // Padded estimate for the review. Must not sign or send. Null when unknown.
   estimateGas?: (tx: EarnSendRequest) => Promise<bigint | null>;
   sleep?: (ms: number) => Promise<void>;
   pollAttempts?: number;
@@ -185,9 +172,8 @@ const defaultSleep = (ms: number) =>
     setTimeout(resolve, ms);
   });
 
-// Proof that the user approved. Only `askUser` creates one, and the functions
-// that sign or send require one, so the compiler rejects a signature the
-// user was not asked about.
+// Only `askUser` creates a Grant, and every sign or send needs one, so the
+// compiler rejects a signature the user was not asked about.
 declare const grantBrand: unique symbol;
 type Grant = { readonly [grantBrand]: true };
 
@@ -233,8 +219,7 @@ async function sendBatchWithGrant(
     await deps.sendBatch(txs);
   } catch (e) {
     if (e instanceof EarnFlowError) throw e;
-    // The grant covered this one batch. Sending the same calls one by one
-    // would need a new approval, so stop here.
+    // The grant covered this batch only. Single sends need a new approval.
     throw new EarnFlowError(
       'batch_failed',
       'The approval transaction failed. Nothing was deposited. Try again.',
@@ -259,9 +244,8 @@ const approvalMismatch = () =>
     'An approval from the Earn service does not match what it describes. Nothing was signed.',
   );
 
-// Decodes approve(spender, amount) from the calldata and checks it against the
-// token and spender the Earn service declared. Any difference stops the flow
-// before the approval sheet.
+// Any difference from what the Earn service declared stops the flow before
+// the approval sheet.
 function checkedApproval({
   token,
   chainId,
@@ -314,9 +298,7 @@ const planMismatch = () =>
     'The deposit plan does not match the chosen vaults. Nothing was sent.',
   );
 
-// Decodes selfBatchDeposit(vaults, amounts, burns) and checks it against the
-// plan the sheet shows: the same vaults and amounts in the same order, no
-// bridge burns, the whole amount, and the contract the approvals named.
+// The sheet shows the plan, so the calldata must match it exactly.
 function checkDeposit({
   tx,
   plan,
@@ -380,7 +362,6 @@ async function pollStrategy(
   const interval = deps.pollIntervalMs ?? 5000;
   const sleep = deps.sleep ?? defaultSleep;
   for (let i = 0; i < attempts; i += 1) {
-    // Polling is sequential by design.
     // eslint-disable-next-line no-await-in-loop
     const strategy = await deps.api.getStrategy(strategyId);
     if (isDone(strategy)) return strategy;
@@ -395,10 +376,9 @@ async function pollStrategy(
 
 const APPROVAL_RECHECK_MS = 2000;
 
-// The Earn server reads allowances through its own RPC, which can lag by a
-// block. Read them until every token shows as approved, so the ranking does
-// not drop a vault. Only the requested vaults count: without a vault list the
-// server reports every vault on the chain.
+// The server reads allowances through its own RPC, which can lag a block, and
+// its ranking drops a vault it sees as unapproved. Only the requested vaults
+// count: without a vault list the server reports every vault on the chain.
 async function confirmApprovals(
   deps: EarnFlowDeps,
   request: Parameters<EarnApi['getApprovals']>[0],
@@ -432,18 +412,17 @@ const VALUE_ATTEMPTS = 65;
 const VALUE_WAIT_MS = 130_000;
 
 // The server value moves only after its event pipeline records the mined
-// transaction. Share prices drift every block, so wait for a value nearer
-// the expected one than the old one. A failed read counts as one attempt.
-// The cap or 130 s ends the wait without an error: the transaction is
-// already mined. It returns the fresh strategy once the value moved. 130 s covers one missed webhook and one sweep minute.
+// transaction. Share prices drift every block, so "moved" means nearer the
+// expected value than the old one. The cap or 130 s ends the wait without an
+// error, because the transaction is already mined. 130 s covers one missed
+// webhook and one sweep minute.
 //
-// After an increase the ledger (contributed minus withdrawn) must move too:
-// the event-processor raises the value before it counts the deposit, and a
-// read between the two would show the increase as yield. That gap closes
-// within one round trip, so a second read with the moved value is accepted
-// as it is: the server floors contributed at the capital, and fees can keep
-// the ledger from moving by half the increase. A decrease needs no such
-// check, because the server records the withdrawal first.
+// After an increase the ledger must move too: the event-processor raises the
+// value before it counts the deposit, so a read between the two shows the
+// increase as yield. A second read with the moved value is accepted anyway,
+// because the server floors contributed at the capital and fees can hold the
+// ledger back. A decrease needs no ledger check: the server records the
+// withdrawal first.
 const ledgerOf = (s?: EarnStrategy) =>
   s && Number.isFinite(s.contributed_usdc) && Number.isFinite(s.withdrawn_usdc)
     ? (s.contributed_usdc as number) - (s.withdrawn_usdc as number)
@@ -504,9 +483,8 @@ const sendRequestOf = (tx: {
 
 const GAS_WAIT_MS = 3000;
 
-// The fee picker's input for a review. Each transaction counts with the gas
-// it is sent with. A failed or slow estimate never stops a review: after 3 s
-// the review opens, and the picker prices the first transaction itself.
+// Each transaction counts with the gas it is sent with. A failed or slow
+// estimate never blocks a review: after 3 s it opens without a total.
 async function gasOf(
   deps: EarnFlowDeps,
   txs: EarnSendRequest[],
@@ -559,8 +537,7 @@ async function finishDeposit(
   };
 }
 
-// A deposit hash on record means a deposit was already sent. Wait for it
-// instead of sending the capital a second time.
+// A recorded hash means a deposit was already sent. Never send it twice.
 async function settleRecordedDeposit(
   deps: EarnFlowDeps,
   strategyId: string,
@@ -595,9 +572,8 @@ async function loadGlobalHidden(
   );
 }
 
-// A resume hint is an id saved by an earlier run. It can be stale: the server
-// deletes an unfunded strategy after about an hour. A stale hint is dropped.
-// An explicit resume (the user pressed Resume on a visible row) is not.
+// A saved hint can be stale: the server deletes an unfunded strategy after
+// about an hour. Only a hint is dropped; an explicit resume fails.
 async function loadResumable(
   api: EarnApi,
   strategyId: string,
@@ -833,7 +809,6 @@ export async function startStrategy(
     const batched =
       missing.length > 1 && (await deps.canBatch?.(chainId)) === true;
     const txs = missing.map((entry) => sendRequestOf({ chainId, ...entry.tx }));
-    // One approval screen lists every token, the spender, and the amount.
     const approvalsGrant = await askUser(deps, {
       kind: 'approvals',
       purpose: 'deposit',
@@ -935,18 +910,15 @@ export async function withdrawStrategy(
   const step = (s: EarnFlowStep) => deps.onStep?.(s);
 
   step({ kind: 'preparing' });
-  // The strategy read only sets the amount on the review. A failed read must
-  // not stop a close.
+  // The read only sets the review amount. A failed read must not stop a close.
   const [calldata, current] = await Promise.all([
     api.withdrawCalldata(strategyId),
     api.getStrategy(strategyId).catch(() => undefined),
   ]);
 
   if (calldata.fallback === 'delete') {
-    // The API offers this when it plans no withdrawal. That also happens for a
-    // funded strategy whose positions are all paused. Deleting that strategy
-    // would leave the shares in the wallet untracked. Only an unfunded
-    // strategy may be deleted here.
+    // The API also offers this for a funded strategy whose positions are all
+    // paused. Deleting it would leave the shares untracked.
     const { status } = current ?? (await api.getStrategy(strategyId));
     if (status !== 'pending_setup') {
       throw new EarnFlowError(
@@ -994,16 +966,14 @@ export async function withdrawStrategy(
   return { status: 'closed', strategy };
 }
 
-// What a close takes out: the live value of each position it withdraws. The
-// server leaves paused positions in their vaults. Undefined when the read
-// lists none, because the net value also holds what stays behind.
+// The server leaves paused positions in their vaults. No net-value fallback:
+// the net value also holds what stays behind.
 function closeValueUsdc(strategy: EarnStrategy): number | undefined {
   const withdrawn = (strategy.positions ?? []).filter((p) => !p.paused);
   if (withdrawn.length === 0) return undefined;
   return withdrawn.reduce((sum, p) => sum + Number(p.usdc_value), 0);
 }
 
-// The approvals and withdrawal transactions of a close or a partial withdrawal.
 // Each group stops at an approval sheet first.
 async function runWithdrawal(
   deps: EarnFlowDeps,
@@ -1074,9 +1044,8 @@ async function runWithdrawal(
   }
 }
 
-// Asks for fresh top-up calldata until the server needs no more approvals.
-// It runs after the approvals read agrees, so a few attempts are enough. Each
-// call counts against the server's limit of 24 partial actions an hour.
+// Runs after the approvals read agrees, so a few attempts are enough. Each call
+// counts against the server's limit of 24 partial actions an hour.
 async function freshTopUpCalldata(
   deps: EarnFlowDeps,
   strategyId: string,
@@ -1099,8 +1068,8 @@ async function freshTopUpCalldata(
 
 const TOP_UP_MINIMUM_USDC = 10;
 
-// Adds USDC to an open strategy. The server funds only the vaults the
-// strategy already holds, so the plan must stay inside them.
+// The server funds only the vaults the strategy already holds, so the plan
+// must stay inside them.
 export async function topUpStrategy(
   { strategy, amountUsdc }: { strategy: EarnStrategy; amountUsdc: number },
   deps: EarnFlowDeps,
@@ -1168,8 +1137,7 @@ export async function topUpStrategy(
     }
   }
 
-  // The server reads allowances through its own RPC, which can lag a block.
-  // Wait on the approvals read, then ask for fresh calldata.
+  // The server RPC can lag a block. Wait on the approvals read first.
   let calldata = first;
   if (spender !== undefined) {
     const usdcNeeded = needed.find((a) => isUsdcToken(a.token));
@@ -1239,8 +1207,7 @@ export async function topUpStrategy(
   return fresh;
 }
 
-// Takes part of the funds out of an open strategy. It never signs a delete:
-// a strategy that is still funded must not be deleted from here.
+// Never signs a delete: a funded strategy must not be deleted from here.
 export async function partialWithdraw(
   {
     strategyId,
@@ -1261,8 +1228,7 @@ export async function partialWithdraw(
       'The Earn service plans no withdrawal for this amount.',
     );
   }
-  // The sheet shows the fee and what the user receives. Without the server's
-  // quote it would show guesses.
+  // Without the server's fee quote the sheet would show guesses.
   if (!calldata.partial) {
     throw new EarnFlowError(
       'no_quote',
@@ -1296,7 +1262,7 @@ export type StrategyPatch = Partial<{
 }>;
 
 // The server rejects a delta under 0.25. The other bounds keep nonsense out of
-// a signed request. The user can see and approve what is signed.
+// a signed request.
 function validatePatch(patch: StrategyPatch) {
   const bad =
     Object.keys(patch).length === 0 ||
@@ -1323,8 +1289,7 @@ function validatePatch(patch: StrategyPatch) {
   }
 }
 
-// Changes the settings of an open strategy. The user signs one message, which
-// costs no gas and moves no funds.
+// One signed message: it costs no gas and moves no funds.
 export async function updateStrategySettings(
   {
     strategyId,

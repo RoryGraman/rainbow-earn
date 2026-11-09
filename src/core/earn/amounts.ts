@@ -5,8 +5,7 @@ export const parseAmount = (text: string): number => {
 
 export type AmountProblem = 'empty' | 'too_low' | 'too_high';
 
-// Checks an amount for the increase and decrease deposit screens. `max` is
-// the wallet balance for an increase and the server's limit for a decrease.
+// `max`: the wallet balance for an increase, the server's limit for a decrease.
 export function amountProblem(
   amount: number,
   limits: { min: number; max?: number },

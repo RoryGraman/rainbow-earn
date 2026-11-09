@@ -40,7 +40,6 @@ import {
 import { useEarnConfig, useTopVaults, useUsdcBalance } from './useEarnData';
 import { useEarnRunner } from './useEarnRunner';
 
-// The rate is the headline, in large glowing type like Rainbow's Rewards title.
 function Hero({ apy }: { apy: number | null }) {
   return (
     <Box
@@ -104,7 +103,6 @@ function Hero({ apy }: { apy: number | null }) {
   );
 }
 
-// A vault in the style of a token row: avatar, name, TVL, APY.
 // `detail` is the short address, for a name another row also has.
 function VaultRow({
   address,
@@ -181,8 +179,7 @@ export function EarnDeposit({
 
   const [amount, setAmount] = useState('');
 
-  // Once the deposit is sent, the USDC has left the wallet. Resume then only
-  // waits for it, so the balance check does not apply.
+  // A sent deposit has left the wallet, so the balance check does not apply.
   const depositSent = useEarnStore(
     (s) => !!pending && !!s.sentDeposits[pending.id],
   );
@@ -229,7 +226,6 @@ export function EarnDeposit({
     ? apys.reduce((sum, apy) => sum + apy, 0) / apys.length
     : null;
 
-  // The deposit's step in the button itself, where the user is looking.
   const busy =
     runner.running && job === 'start'
       ? runner.step

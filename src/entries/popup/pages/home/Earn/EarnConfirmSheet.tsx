@@ -54,8 +54,6 @@ import { useNativePrices } from './useEarnData';
 const shorten = (address: string) =>
   address.length > 12 ? `${address.slice(0, 6)}…${address.slice(-4)}` : address;
 
-// A row of Rainbow's swap review: label left, value right, 32px high.
-// `detail` adds a small second line under the label.
 function Row({
   label,
   detail,
@@ -104,9 +102,7 @@ function Value({
   );
 }
 
-// A contract address that links to the chain's explorer, with a copy button.
-// The explorer opens in a background tab, as in Rainbow's swap review, so the
-// review stays open.
+// The explorer opens in a background tab, so the review stays open.
 function ContractValue({
   address,
   chainId,
@@ -165,7 +161,6 @@ function EarnMark() {
   );
 }
 
-// The asset card from Rainbow's swap review.
 function Card({
   icon,
   title,
@@ -248,7 +243,6 @@ type Review = {
   more?: ReactNode;
 };
 
-// A settings change shows each setting with the label of the settings sheet.
 const SETTING_LABELS: Record<keyof StrategyPatch, string> = {
   delta_pct: 'earn.settings_delta_pct',
   delta_confirmations: 'earn.settings_delta_confirmations',
@@ -273,8 +267,7 @@ const settingValue = (field: keyof StrategyPatch, value?: number) => {
   }
 };
 
-// The vault count opens to the vaults that rank highest now. The deposit
-// review later shows the final split.
+// The vaults that rank highest now. The deposit review shows the final split.
 function VaultsRow({
   vaults,
 }: {
@@ -337,7 +330,6 @@ function VaultsRow({
   );
 }
 
-// The chains the request really touches, by name.
 const networkRow = (chainIds: number[]) => (
   <Row label={i18n.t('earn.info_network')}>
     <Value>{[...new Set(chainIds)].map(chainName).join(', ')}</Value>
@@ -568,8 +560,8 @@ function reviewFor(
     }
     case 'withdraw': {
       const { partial } = request;
-      // Each contract the transactions go to, once, in view. The contract has
-      // the same address on every chain, so several rows name their chain.
+      // The contract has the same address on every chain, so several rows
+      // name their chain.
       const targets = [
         ...new Map(
           request.transactions.map((tx) => [
@@ -698,10 +690,8 @@ function ApproveButton({
 
 const FEE_WAIT_MS = 5000;
 
-// Rainbow's fee picker, as on its send and swap reviews: the estimated fee,
-// the speed menu, and the gas settings. The fee counts every transaction of
-// the review when each has a gas estimate, else only the first. As on
-// Rainbow's own reviews, the L1 data fee counts once.
+// The fee counts every transaction of the review when each has a gas estimate,
+// else only the first. As on Rainbow's own reviews, the L1 data fee counts once.
 function EarnFeeApprove({
   gas,
   address,
@@ -719,9 +709,8 @@ function EarnFeeApprove({
     () => ({ from: address, to: gas.tx.to, data: gas.tx.data, chainId }),
     [address, gas.tx.to, gas.tx.data, chainId],
   );
-  // Rainbow prices the fee with the wallet's native asset, in the wallet's
-  // currency. Without that asset (a build without Rainbow's keys, or no ETH
-  // on the chain), the Earn API's USD price stands in, for USD only.
+  // Without Rainbow's native asset (no Rainbow keys, or no ETH on the chain),
+  // the Earn API's USD price stands in, for USD only.
   const { data: prices } = useNativePrices();
   const { currentCurrency } = useCurrentCurrencyStore();
   const symbol = getChain({ chainId }).nativeCurrency.symbol;
@@ -786,11 +775,9 @@ function EarnFeeApprove({
   );
 }
 
-// Rainbow signs messages and sends transactions from inside the wallet, with
-// no screen of its own. Every signature the Earn flow needs stops here first,
-// in the layout of Rainbow's swap review. The close button declines. As on
-// that review, a tap outside does nothing, so closing the speed menu cannot
-// decline by accident. Only the button at the bottom signs.
+// Rainbow signs with no screen of its own, so every Earn signature stops here
+// first. Only the bottom button signs. A tap outside does nothing, so closing
+// the speed menu cannot decline by accident.
 export function EarnConfirmSheet() {
   const request = useEarnRunStore((s) => s.confirmation);
   const { currentAddress } = useCurrentAddressStore();
